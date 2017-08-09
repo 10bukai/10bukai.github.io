@@ -1,4 +1,18 @@
 <html>
-<p>sampleページです。
-こんな感じで表示されます
+<head>
+<script src="https://cdn.mlkcca.com/v0.6.0/milkcocoa.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+  var milkcocoa = new MilkCocoa('maxj654lbrg.mlkcca.com');
+  var ds = milkcocoa.dataStore('messages');
+  ds.stream().next(function(err, messages){
+   console.log(messages);
+   $("#message").text(JSON.stringify(messages));
+   });
+</script>
+</head>
+<body>
+<h2>データ</h2>
+<div id="message"></div>
+</body>
 </html>
