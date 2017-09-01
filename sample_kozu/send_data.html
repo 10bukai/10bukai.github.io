@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <script src="https://cdn.mlkcca.com/v0.6.0/milkcocoa.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script>
+    <!-- milkcocoaの設定-->
+    var milkcocoa = new MilkCocoa('maxj654lbrg.mlkcca.com');
+    var ds = milkcocoa.dataStore('messages');
+
+    <!-- milkcocoaへのデータ送信処理-->
+    function sendMilkcocoa(status) {
+        if (status == "on") {
+            ds.push({ status: "on" });
+        } else {
+            ds.push({ status: "off" });
+        }
+    }
+
+    <!-- ボタンのイベント紐づけ-->
+    $(document).ready(function(){
+    	$(".send-value").click(function(){
+    		sendMilkcocoa($(this).val());
+    	})
+    });
+    </script>
+</head>
+
+<body>
+    <div class="button-content" id="working">
+        <button class="send-value" value="on">着席中</button>
+    </div>
+    <div class="button-content" id="outing">
+        <button class="send-value" value="off">離席中</button>
+    </div>
+    <div class="button-content" id="see-data">
+        <a href="./view_data.html" name="view_data">データを見る</a>
+    </div>
+</body>
+
+</html>
