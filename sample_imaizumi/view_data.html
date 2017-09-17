@@ -1,0 +1,73 @@
+<html>
+
+<head>
+    <script src="https://cdn.mlkcca.com/v0.6.0/milkcocoa.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script>
+    var milkcocoa = new MilkCocoa('maxj654lbrg.mlkcca.com');
+    var ds = milkcocoa.dataStore('messages');
+
+
+    $(document).ready(function() {
+        var statusOn = $("#status-on");
+        var statusOff = $("#status-off");
+        var status;
+        <!-- 初期データ取得 -->
+        ds.stream().next(function(err, values) {
+            $("#message").text(JSON.stringify(values));
+            var nowStatus;
+            values.forEach(function(e) {
+                if (!nowStatus) {
+                    nowStatus = e;
+                } else {
+                    if (nowStatus.timestamp <= e.timestamp) {
+                        nowStatus = e;
+                    }
+
+                }
+            });
+            if(!nowStatus){
+            	<!--non data -->
+            	return ;
+            }else if (nowStatus.value.status == "on") {
+                statusOn.toggle();
+                status = "on";
+            } else {
+                statusOff.toggle();
+                status = "off";
+            }
+        });
+
+        <!-- データ更新時の処理 -->
+        ds.on('push', function(obj) {
+            console.log('push', obj.id, obj.value);
+            if (obj.value.status == "on" && status != "on") {
+                if (status == "off") {
+                    statusOff.toggle();
+                }
+                statusOn.toggle();
+                status = "on";
+            } else if (obj.value.status == "off" && status != "off") {
+                if (status == "on") {
+                    statusOn.toggle();
+                }
+                statusOff.toggle();
+                status = "off";
+            }
+        });
+    });
+    </script>
+</head>
+
+<body>
+    <h2>現在の状況</h2>
+    <div id="status-on" style="display: none;">
+        <img class="status-img" src="./img/working.png">
+    </div>
+    <div id="status-off" style="display: none;">
+        <img class="status-img" src="./img/outing.png">
+    </div>
+    <div id="message"></div>
+</body>
+
+</html>
