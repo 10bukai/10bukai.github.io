@@ -3,10 +3,13 @@
 <head></head>
 <body>
   <img style="max-width: 400px;"><input type="file" accept="image/*" />
-  <pre></pre>
+  <div id="result"></div>
   <script type="text/javascript">
-  const api_key = `############################`;
-  const url = `https://vision.googleapis.com/v1/images:annotate`;
+  const api_key = `AIzaSyAfF0PF3bTewb7UhImHz90IBOFBY2Na2Rw`;
+  const vison_url = `https://vision.googleapis.com/v1/images:annotate`;
+  const translate_url = `https://translation.googleapis.com/language/translate/v2/`;
+  let disp_before_word = new Array();
+  let disp_after_word = new Array();
   // Send API Request to Cloud Vision API
   const sendAPI = (base64string) => {
     let body = {
@@ -15,7 +18,7 @@
       ]
     };
     let xhr = new XMLHttpRequest();
-    xhr.open('POST', `${url}?key=${api_key}`, true);
+    xhr.open('POST', `${vison_url}?key=${api_key}`, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
     const p = new Promise((resolve, reject) => {
       xhr.onreadystatechange = () => {
@@ -27,6 +30,7 @@
     xhr.send(JSON.stringify(body));
     return p;
   }
+  
   // Read input file
   const readFile = (file) => {
     let reader = new FileReader();
@@ -39,21 +43,90 @@
     reader.readAsDataURL(file);
     return p;
   };
+
+  // send API response reader
+  const readSendAPIResponse = (api_res) => {
+    let words = new Array();
+    api_res.responses[0].textAnnotations.forEach(function(e){words.push(e.description)});
+    // 重複排除
+    let word_list = Array.from(new Set(words));
+    word_list.shift();
+    disp_before_word = word_list ;
+    return Promise.resolve(word_list);
+  }
+
+  // translate API request Cloud Translation 
+  const transrateAPI = (word_list) => {
+    var body = {
+        q:word_list	,
+        target:'ja',
+        format:'text',
+        key:api_key,
+    };
+    let xhr = new XMLHttpRequest();
+    xhr.open('POST', `${translate_url}?key=${api_key}`, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    const p = new Promise((resolve, reject) => {
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState != XMLHttpRequest.DONE) return;
+        if (xhr.status >= 400) return reject({message: `Failed with ${xhr.status}:${xhr.statusText}`});
+        resolve(JSON.parse(xhr.responseText));
+      };
+    })
+    xhr.send(JSON.stringify(body));
+    return p;
+  }
+
   // Event handling
   document.querySelector('input').addEventListener('change', ev => {
     if (!ev.target.files || ev.target.files.length == 0) return;
     Promise.resolve(ev.target.files[0])
       .then(readFile)
       .then(sendAPI)
+      .then(readSendAPIResponse)
+      .then(transrateAPI)
       .then(res => {
-        console.log('SUCCESS!', res);
-        document.querySelector('pre').innerHTML = JSON.stringify(res, null, 2);
+        let translatedText = res.data.translations;
+        let map = new Map();
+        translatedText.forEach((e,i) => {
+        	map.set(disp_before_word[i] ,e.translatedText);
+        })
+        document.getElementById('result').appendChild(createTableHtml(map));
       })
       .catch(err => {
         console.log('FAILED:(', err);
-        document.querySelector('pre').innerHTML = JSON.stringify(err, null, 2);
+        document.getElementById('result').innerHTML = JSON.stringify(err, null, 2);
       });
   });
+  
+  var createTableHtml = function(data) {
+    var elm_table           = document.createElement('table');
+    elm_table.style.cssText = 'width:300;height:200';
+    var o_row = elm_table.insertRow();
+    var elm_cell_1 = o_row.insertCell();
+    elm_cell_1.innerText = "翻訳前" ;
+    elm_cell_1.style.border = '1 solid #000';
+
+    var elm_cell_2 = o_row.insertCell();
+    elm_cell_2.innerText = "日本語" ;
+    elm_cell_2.style.border = '1 solid #000';
+
+
+    data.forEach(function(value,key){
+      var o_row = elm_table.insertRow();
+      var elm_cell_1 = o_row.insertCell();
+      elm_cell_1.innerText = key ;
+      elm_cell_1.style.border = '1 solid #000';
+
+      var elm_cell_2 = o_row.insertCell();
+      elm_cell_2.innerText = value ;
+      elm_cell_2.style.border = '1 solid #000';
+    })
+    return elm_table;
+  };
+  
   </script>
 </body>
 </html>
+
+
